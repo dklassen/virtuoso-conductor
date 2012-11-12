@@ -1,0 +1,31 @@
+# install script to make sure the environment is properly setup 
+
+# things to do: 
+
+#  create symlinks from install directory to virtuoso installation
+# set up the config file with the appropriate values
+# help configure the virtuso.ini file
+
+source config
+
+echo "Checking for virtuoso directory using config"
+if [ ! $virtuoso_home ]; then
+	echo "virtuoso variable is not set. Set your virtuoso=/path/to/virtuoso/directory/not/bin to proceed."
+else
+	echo "Found virtuoso directory creating symlinks:"
+	echo "->virtuoso-t"
+		ln -s ${virtuoso_home}/bin/virtuoso-t virtuoso-t
+	echo "->isql"
+		ln -s ${virtuoso_home}/bin/isql isql
+fi
+
+echo "checking we can find a virtuoso.ini file"
+if [ ! -f $virtuoso_ini ]; then
+	echo "virtuoso ini file needs to be configured in the config file "
+else
+	echo "Found virtuoso.ini file"
+fi
+
+
+# set the port variable in the virtuoso.ini file to the one specified in the 
+# config

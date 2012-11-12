@@ -1,7 +1,7 @@
 # !bin/bash -x
 
-# need to implement checks on config
 source config.cfg
+source scripts/alert_monitor.sh
 
 #PRE_CMD="$ISQL $HOST:$PORT -U $USER -P $PASS verbose=on echo=on errors=stdout banner=off prompt=off"
 
@@ -14,6 +14,10 @@ fi
 
 isql_cmd="$isql localhost:$isql_port -U $user"
 isql_pass="-P $isql_password"
+
+##
+# define functions
+#
 
 ##
 # print the help messages for use
@@ -31,7 +35,8 @@ function _usage(){
 	clear	: clear graph from database specified by string
 	index	: generate the index for facet
 	
-	-r -- specific recursive loading of files in subdirectories
+	-r : specifify recursive loading of files in subdirectories
+	-t : specify the type of file to load, ntriples, rdf, or nquads 
 USAGE
 
 echo $USAGE
@@ -339,16 +344,9 @@ fi
 system_check
 
 OPTIND=1
-while getopts "hrf:P:n:u:p:ba" opt; do
-  case $opt in
-      
-      # help 
-      h)
-    	echo _usage
-		exit 1
-      ;;
-      #PORT
-      n)
+while getopts "rt:" opt; do
+  case $opt in      
+      t)
         if [ "$OPTARG" == "ntriples" ]; then
         	input="nt"
         elif [ "$OPTARG" == "rdf" ]; then
@@ -356,14 +354,6 @@ while getopts "hrf:P:n:u:p:ba" opt; do
         elif [ "$OPTARG" == "nquad" ]; then
         	input="nq"
         fi
-      ;;
-      a)
-        FACET=0
-      ;;
-      #USER
-      u)
-        echo "Setting username: $OPTARG"
-        USER="$OPTARG"
       ;;
       r)
     	RECURSIVE=true
@@ -382,6 +372,10 @@ case $1 in
 	;;
 	stop)
 		stop
+	;;
+	restart)
+		stop
+		start
 	;;
 	delete)
 		if [ "$2" ]; then

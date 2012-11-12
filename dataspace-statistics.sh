@@ -1,0 +1,1 @@
+# script to generate statistics about virtuoso machine and report back periodically about usage
