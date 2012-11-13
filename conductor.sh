@@ -96,7 +96,7 @@ function start_loader(){
 # could use lsof to check the http port if there is a webservice running?
 function status(){
 	local _virtuoso_status=$1
- 	local _status_result=$(ps -ax | grep -v grep | grep $virtuoso | awk '{print $1}')
+ 	local _status_result=$(ps ax | grep -v grep | grep $virtuoso | awk '{print $1}')
 
 	if [ $_status_result ]; then
 		_status_result=true
