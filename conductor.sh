@@ -36,7 +36,7 @@ function _usage(){
 	index	: generate the index for facet
 	
 	-r : specifify recursive loading of files in subdirectories
-	-t : specify the type of file to load, ntriples, rdf, or nquads 
+	-t : specify the type of file to load, ntriples, rdf, or nquads
 USAGE
 
 echo $USAGE
@@ -130,7 +130,7 @@ function error_check(){
 
 # start new rdf_loader as background job
 function rdf_loader_run(){
-${isql_cmd} ${isql_pass} verbose=on echo=on errors=stdout banner=off prompt=off exec="rdf_loader_run(); exit;" &> /dev/null &
+   ${isql_cmd} ${isql_pass} verbose=on echo=on errors=stdout banner=off prompt=off exec="rdf_loader_run(); exit;" &> /dev/null &
 }
 
 # prints statistics on the current loading of files
@@ -212,11 +212,11 @@ function stop(){
 # load a single file into the virtuoso server
 # if not specified default graph is used.
 function load_file () {
-    CMD=$($ISQL $HOST:$PORT -U $USER -P $PASS verbose=on echo=on errors=stdout banner=on prompt=off exec="DB.DBA.TTLP_MT(file_to_string_output('$1'),'', '$GRAPH',$FLAGS);")
+   # CMD=$($ISQL $HOST:$PORT -U $USER -P $PASS verbose=on echo=on errors=stdout banner=on prompt=off exec="DB.DBA.TTLP_MT(file_to_string_output('$1'),'', '$GRAPH',$FLAGS);")
     
-   case "$CMD" in
-    *"Error"*)
-     echo "$CMD"
+   #case "$CMD" in
+   # *"Error"*)
+   #  echo "$CMD"
 
      ##
      # implement removal of problem lines to continue loading
@@ -225,11 +225,11 @@ function load_file () {
      # after removing the line start from the offset when the file stopped
      # loading
 
-     exit 1
-    ;;
-    *"Done"*)
-     echo "----> Successfully loaded file: $1"
-   esac
+     #exit 1
+    #;;
+    #*"Done"*)
+    # echo "----> Successfully loaded file: $1"
+   #esac
 }
 
 ##
@@ -344,7 +344,7 @@ fi
 system_check
 
 OPTIND=1
-while getopts "rt:" opt; do
+while getopts "rt:n:" opt; do
   case $opt in      
       t)
         if [ "$OPTARG" == "ntriples" ]; then
@@ -355,6 +355,9 @@ while getopts "rt:" opt; do
         	input="nq"
         fi
       ;;
+      e)
+			echo "setting notification to $OPTARG"
+			report_address=$OPTARG
       r)
     	RECURSIVE=true
       ;;  
