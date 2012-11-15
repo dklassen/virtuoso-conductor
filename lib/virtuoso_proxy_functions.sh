@@ -19,10 +19,12 @@ function start(){
 		echo "This may be because this is the first time you are starting virtuoso."
 		echo "Creating the file now"
 		touch ${location}/virtuoso.log
+
 	fi
 
 	status check
-	if $check
+
+	if [[ $check == "false" ]]
 	then
 		echo "$virtuoso is running"
 	 	return 0
