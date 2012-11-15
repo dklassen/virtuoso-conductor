@@ -1,4 +1,5 @@
 virtuoso-t
 virtuoso.log
 virtuoso.ini
-logs
+logs/*
+virtuoso_instances/*
