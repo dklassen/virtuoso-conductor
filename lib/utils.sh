@@ -197,7 +197,7 @@ function status(){
 ##
 # place all the checks that need to be done here
 function system_check(){
-	if [ ! $location ]; then echo "virtuoso_home is not configured. Please set VIRTUOSO_HOME in your .bash_profile"; exit 1; fi
+	if [ ! $virtuoso_home ]; then echo "virtuoso_home is not configured."; exit 1; fi
 }
 
 ##
