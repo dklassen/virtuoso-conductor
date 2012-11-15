@@ -131,7 +131,6 @@ case $1 in
 
 			clear_load_list
 
-
 			original=`pwd`
 			cd $2
 			dir=`pwd`
@@ -152,7 +151,7 @@ case $1 in
 		read answer
 
 		if [ $answer == "y" ]; then
-			 rm ./{virtuoso.log,virtuoso.db,virtuoso.lck,virtuoso-temp.db,virtuoso.trx,virtuoso.pxa}
+			 rm $location/{virtuoso.log,virtuoso.db,virtuoso.lck,virtuoso-temp.db,virtuoso.trx,virtuoso.pxa}
 		else
 			echo "potential disaster averted"
 			exit 1
