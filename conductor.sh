@@ -1,335 +1,11 @@
 # !bin/bash -x
 
-source config.cfg
+# require the necessary files
+source config/config.cfg
 source scripts/alert_monitor.sh
+source lib/virtuoso_proxy_functions.sh
+source lib/utils.sh
 
-#PRE_CMD="$ISQL $HOST:$PORT -U $USER -P $PASS verbose=on echo=on errors=stdout banner=off prompt=off"
-
-isql=${isql_path:-"$virtuoso_home/bin/isql"}
-
-if [ ! $isql ]; then
-	echo "Could not find isql."
-	exit 1
-fi
-
-isql_cmd="$isql localhost:$isql_port -U $user"
-isql_pass="-P $isql_password"
-
-##
-# define functions
-#
-
-##
-# print the help messages for use
-
-function _usage(){
- cat <<"USAGE"
-	
-	select from one of the following options:
-	[start|stop|restart|load|clear|index|destory]
-
-	start	: start the server
-	stop	: shutdown the server gracefully
-	restart	: restart the server
-	load	: load directory of files. the graph can be specified by using load into <graphname>
-	clear	: clear graph from database specified by string
-	index	: generate the index for facet
-	
-	-r : specifify recursive loading of files in subdirectories
-	-t : specify the type of file to load, ntriples, rdf, or nquads
-USAGE
-
-echo $USAGE
-}
-
-##
-# place all the checks that need to be done here
-function system_check(){
-	if [ ! $virtuoso_home ]; then echo "virtuoso_home is not configured. Please set VIRTUOSO_HOME in your .bash_profile"; exit 1; fi
-}
-
-##
-# turn on the logging of isql statements 
-# 
-function trace_on(){
-	run_cmd "trace_on('errors','exec');"
-}
-##
-# handle the process of loading virtuso
-
-function load(){
-	if [ -f "$1" ];then
-        echo "have not added support for loading a single file yet"
-	elif [ -d "$1" ]
-	then
-			
-			status check
-			if $check ; then
-				echo "loading directory: $1"
-				
-				add_dirlist $1
-				start_loader
-				
-				echo "Finished."
-				exit 1
-			else
-				echo "There is no virtuoso running. please start using [start] option"
-				exit 1
-			fi
-	else
-		echo "please supply a real file/directory: $1"
-		exit 1
-	fi
-}
-
-##
-# start rdf_loaders
-
-function start_loader(){
-	for x in {1..5} ; do rdf_loader_run  ;   done
-} 
-
-# check the status of the virtuoso instance
-# will need to find the specific instance
-# not sure how this is done at the moment.
-
-# could use lsof to check the http port if there is a webservice running?
-function status(){
-	local _virtuoso_status=$1
- 	local _status_result=$(ps ax | grep -v grep | grep $virtuoso | awk '{print $1}')
-
-	if [ $_status_result ]; then
-		_status_result=true
-	else
-		_status_result=false
-	fi
-
-	eval $_virtuoso_status="'$_status_result'" 
-}
-
-# load a directory of ntriple files into the virtuoso server
-function add_dirlist (){
-	if [ $RECURSIVE ]
-	then
-			run_cmd "ld_dir_all('$1','*.$input.gz','$graph');" logs/virtuoso_load.log
-	else	
-			run_cmd "ld_dir('$1','*.$input.gz','$graph');" logs/virtuoso_cmd.log
-	fi
- 
- echo "Directory listing for $1 added to load list."
-}
-# Done - <sometime> ms.
-function error_check(){
-   case "$1" in
-     *"Error"*)
-      # echo "$CMD"
-       exit 1
-       ;;
-    esac
-}
-
-# start new rdf_loader as background job
-function rdf_loader_run(){
-   ${isql_cmd} ${isql_pass} verbose=on echo=on errors=stdout banner=off prompt=off exec="rdf_loader_run(); exit;" &> /dev/null &
-}
-
-# prints statistics on the current loading of files
-function load_status(){
- return false
-}
-
-# completely reset the load list
-function clear_load_list(){
-	run_cmd "delete from load_list;" logs/virtuoso_cmd.log
-}
-
-# update the load list files that were not able to be loaded and try again
-function reset_load_list(){
-	run_cmd "update load_list set ll_state=0 where ll_state=1" /logs/virtuoso_cmd.log
-}
-
-# listen for errors in file loading
-function listen(){
-return false
-}
-
-# start virtuoso in background
-# should check to make sure it is up
-# and running before finishing command
-function start(){
-	
-	if [ ! -f  "${config_dir}/virtuoso.log" ]; then
-		echo "Cannot find the virtuoso.log file to monitor startup"
-		echo "This may be because this is the first time you are starting virtuoso."
-	fi
-
-	status check
-	if $check
-	then
-		echo "$virtuoso is running"
-	 	return 0
-	fi
-	
-	`./$virtuoso > /dev/null  &`
-	
-	tail -n 0 -F "${config_dir}/virtuoso.log" | while read LOGLINE
-	do
-		   [[ "${LOGLINE}" == *"Server online at $port"* ]] && pkill -P $$ tail
-		   [[ "${LOGLINE}" == *"There is no configuration file virtuoso.ini"* ]] && echo "No virtuoso.ini file found" && pkill -P $$ tail
-	done
-
-	echo "Starting server.............................................................................[Ok]"
-}
-
-# stop the server gracefully
-# *** Error S2801: [Virtuoso Driver]CL033: Connect failed to 
-function stop(){
-
-	if [ ! -f  "${config_dir}/virtuoso.log" ]; then
-		echo "Cannot find the virtuoso.log file."
-		echo "This log is used to monitor virtuoso and is found in the same"
-		echo "directory as the virtuoso.ini file. Set the $config_dir variable to that directory"
-		exit 1
-	fi
-
-	status check
-	if [ ! $check ]; then
-		echo "No $VIRTUOSO to shutdown"
-		exit 1
-	fi
-
-	${isql_cmd} ${isql_pass} "-K > /dev/null"
-
-	tail -n 1 -f virtuoso.log | while read LOGLINE
-	do	
-		   [[ "${LOGLINE}" == *"Server shutdown complete"* ]] && pkill -P $$ tail
-	done
-
-	echo "Server shutdown complete........................................................................[OK]"
-}
-
-##
-# load a single file into the virtuoso server
-# if not specified default graph is used.
-function load_file () {
-   # CMD=$($ISQL $HOST:$PORT -U $USER -P $PASS verbose=on echo=on errors=stdout banner=on prompt=off exec="DB.DBA.TTLP_MT(file_to_string_output('$1'),'', '$GRAPH',$FLAGS);")
-    
-   #case "$CMD" in
-   # *"Error"*)
-   #  echo "$CMD"
-
-     ##
-     # implement removal of problem lines to continue loading
-     # use example: sed -n -e 120p -e 145p -e 1050p /var/log/syslog
-     # where numbers are specific line numbers to be deleted from the file.
-     # after removing the line start from the offset when the file stopped
-     # loading
-
-     #exit 1
-    #;;
-    #*"Done"*)
-    # echo "----> Successfully loaded file: $1"
-   #esac
-}
-
-##
-# check for errors while running isql commands on the server
-function trigger(){
-	local _tail_pid=$1
-
-	while  read line; do
-
-		case $line in
-
-			*"Error S2801"*)
-				echo "Not able to connect to isql. see log for details"
-				kill $_tail_pid
-				kill $$
-				;;
-
-			*"Error 37000"*)
-				echo "Synatx error. see log for details"
-				;;
-			*"Error"*)
-				echo "unhandled error. see log for details."
-				kill -9 $1
-				;;
-
-			*"Done"*)
-				echo "--> done."
-				kill -9 $1
-				;;
-		esac
- 	done
-}
-##
-# update the facet
-#
-function update_facet(){
-	echo "Updating facet browser. This could take awhile....."
- 	
- 	run_cmd "RDF_OBJ_FT_RULE_ADD(null,null,'All');"  logs/virtuoso_cmd.log
- 	run_cmd "VT_INC_INDEX_DB_DBA_RDF_OBJ();"  logs/virtuoso_cmd.log
-	#run_cmd "urilbl_ac_init_db();"  logs/virtuoso_cmd.log
-	#run_cmd "s_rank();"  logs/virtuoso_cmd.log
-
-	echo "Done building index"
-}
-
-
-function run_cmd(){
-
-echo "Running: $1"
-if [ $2 ]; then
-	echo "Monitor for completion = yes"
-	logfile=$2
-	tail -n0 -F $logfile 2>/dev/null | trigger $! &
-else
-	logfile="/dev/null"
-fi
-
-${isql_cmd} ${isql_pass} <<EOF &> $logfile
-	$1 
-	exit;
-EOF
-
-}
-
-
-##
-# execute rdfs subClassOf inference
-
-
-##
-# delete specified graph
-# uss log_enable(3,1) function to
-# set the transaction to autocomit on 
-# each operation
-function delete_graph() {
-  
-  PRE_CMD="$ISQL $HOST:$PORT -U $USER -P $PASS verbose=on blobs=on echo=on errors=stdout banner=on prompt=off "
-  graphs=$($PRE_CMD exec="db.dba.sparql_select_known_graphs();")
-  
-  array=( $graphs )
-
-  needle=false
-  case "${array[@]}" in
-  	*\ "$1"\ *)
-  			needle=true	
-		;;
-		*)
-		  echo "did not find the specified graph"
-		::
-   esac
-
-	if $needle 
-		then
-			echo "deleting graph $1"
-			$CMD=$($PRE_CMD exec="log_enable(3,1); SPARQL CLEAR GRAPH <$1>;"  &)
-			echo $CMD
-		fi
-  #CMD=$($ISQL $HOST:$PORT -U $USER -P $PASS verbose=on echo=on errors=stdout banner=on prompt=off exec="log_enable(3,1); SPARQL CLEAR GRAPH <$GRAPH>;") 
-}
 
 #######################################################################################33
 #Start the script
@@ -358,6 +34,7 @@ while getopts "rt:n:" opt; do
       e)
 			echo "setting notification to $OPTARG"
 			report_address=$OPTARG
+		;;
       r)
     	RECURSIVE=true
       ;;  
@@ -370,11 +47,42 @@ done
 shift $(($OPTIND - 1))
 
 case $1 in
+	setup)
+		if [ ! $2 ]; then
+			echo "Need to specify a instance to load. Use [list] to show."
+			exit 1
+		fi
+
+		_setup_instance $2
+		exit 0
+		;;
 	start)
-		start
+		if [ ! $2 ]; then
+			echo "Need to specify a instance to load. Use [list] to show."
+			exit 1
+		fi
+
+		 _load_instance $2
+
+		 if [[ $? == 0 ]]; then
+		 	start
+		 else
+		 	exit 1
+		 fi
 	;;
 	stop)
-		stop
+		if [ ! $2 ]; then
+			echo "Need to specify a instance to load. Use [list] to show."
+			exit 1
+		fi
+
+		 _load_instance $2
+
+		 if [[ $? == 0 ]]; then
+		 	stop
+		 else
+		 	exit 1
+		 fi
 	;;
 	restart)
 		stop
@@ -388,6 +96,16 @@ case $1 in
 			exit 1
 		fi
 	;;
+	info)
+		if [ ! ${2} ]; then
+			echo "supply the name of an instance"
+			_list_instances
+			exit 0
+		fi
+
+		_instance_info $2
+		exit 0
+	;;
 	load)
 		
 		if [ ! "$2" ];
@@ -399,6 +117,18 @@ case $1 in
 				echo "loading all $input files into $4"
 				graph=$4
 			fi
+
+			if [[ ! $5 ]]; then
+				echo "specify an instance to use"
+				_list_instances
+			fi
+
+			_load_instance $5
+
+			if [[ $? == 1 ]]; then
+				exit 1
+			fi
+
 			clear_load_list
 
 
@@ -410,7 +140,9 @@ case $1 in
 		    exit 0
 		fi
 	;;
-
+	list)
+		_list_instances
+	;;
 	index)
 		update_facet
 
