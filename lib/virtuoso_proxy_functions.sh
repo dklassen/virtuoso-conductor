@@ -145,8 +145,8 @@ EOF
 function update_facet(){
 	echo "Updating facet browser. This could take awhile....."
  	
- 	run_cmd "RDF_OBJ_FT_RULE_ADD(null,null,'All');"  logs/virtuoso_cmd.log
- 	run_cmd "VT_INC_INDEX_DB_DBA_RDF_OBJ();"  logs/virtuoso_cmd.log
+ 	run_cmd "RDF_OBJ_FT_RULE_ADD(null,null,'All');"  $command_log
+ 	run_cmd "VT_INC_INDEX_DB_DBA_RDF_OBJ();"  $command_log
 	echo "Done building index"
 }
 
@@ -155,9 +155,9 @@ function update_facet(){
 function add_dirlist (){
 	if [ $RECURSIVE ]
 	then
-			run_cmd "ld_dir_all('$1','*.$input.gz','$graph');" logs/virtuoso_load.log
+			run_cmd "ld_dir_all('$1','*.$input.gz','$graph');" $command_log
 	else	
-			run_cmd "ld_dir('$1','*.$input.gz','$graph');" logs/virtuoso_cmd.log
+			run_cmd "ld_dir('$1','*.$input.gz','$graph');" $command_log
 	fi
  
  echo "Directory listing for $1 added to load list."
@@ -175,10 +175,10 @@ function load_status(){
 
 # completely reset the load list
 function clear_load_list(){
-	run_cmd "delete from load_list;" logs/virtuoso_cmd.log
+	run_cmd "delete from load_list;" $command_log
 }
 
 # update the load list files that were not able to be loaded and try again
 function reset_load_list(){
-	run_cmd "update load_list set ll_state=0 where ll_state=1" /logs/virtuoso_cmd.log
+	run_cmd "update load_list set ll_state=0 where ll_state=1" $command_log
 }
