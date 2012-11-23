@@ -56,7 +56,7 @@ case $1 in
 
 			if [[ $? == 0 ]]; then
 				status check
-				if [[ $check == "true" ]]; then
+				if $check ; then
 					echo "status: running"
 					exit 0
 				else
