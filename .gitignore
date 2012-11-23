@@ -4,3 +4,7 @@ virtuoso.ini
 logs/*
 virtuoso_instances/*
 Gemfile.lock
+config/virtuoso_instances/*
+
+# except
+!config/virtuoso_instances/test.cfg
