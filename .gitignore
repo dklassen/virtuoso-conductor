@@ -3,3 +3,4 @@ virtuoso.log
 virtuoso.ini
 logs/*
 virtuoso_instances/*
+Gemfile.lock
