@@ -19,19 +19,21 @@ function start(){
 		echo "This may be because this is the first time you are starting virtuoso."
 		echo "Creating the file now"
 		touch ${location}/virtuoso.log
-
 	fi
 
 	status check
-
-	if [[ $check == "false" ]]
+	if  $check
 	then
 		echo "$virtuoso is running"
 	 	return 0
 	fi
 	
-	if [ -f $virtuoso ];then
-		`$virtuoso > /dev/null  &`
+	if [ -f "$location$virtuoso" ];then
+		echo "starting: $virtuoso"
+		curr_dir=$(pwd)
+		cd $location
+		`./$virtuoso >/dev/null &`
+		cd $curr_dir
 	else
 		echo "missing $virtuoso. may need to run setup"
 		exit 1
@@ -129,6 +131,11 @@ echo "Running: $1"
 if [ $2 ]; then
 	echo "Monitor for completion = yes"
 	logfile=$2
+	
+	if [ ! -f $logfile ]
+	then
+		mkdir -p ${logfile}
+	fi
 	tail -n0 -F $logfile 2>/dev/null | trigger $! &
 else
 	logfile="/dev/null"

@@ -1,0 +1,3 @@
+data_dir: /home/bio2rdf-dataspaces/data/
+script_dir: /home/bio2rdf-dataspaces/scripts/bio2rdf-scripts
+download_dir: /home/bio2rdf-dataspaces/download/

@@ -1,0 +1,5 @@
+dataspace: pharmaspace
+data_dir: /home/bio2rdf-dataspaces/data/
+virtuoso_dir: /home/bio2rdf-dataspaces/virtuoso
+script_dir: /home/bio2rdf-dataspaces/bio2rdf-scripts/
+ 

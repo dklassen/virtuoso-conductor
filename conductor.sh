@@ -134,7 +134,6 @@ case $1 in
 		else
 			if [[ "$3" == "into" && $4 ]]; then
 				echo "loading all $input files into $4"
-				graph=$4
 			fi
 
 			if [[ ! $5 ]]; then
@@ -147,7 +146,7 @@ case $1 in
 			if [[ $? == 1 ]]; then
 				exit 1
 			fi
-
+			graph=$4
 			clear_load_list
 
 			original=`pwd`
@@ -166,10 +165,23 @@ case $1 in
 
 		;;
 	destroy)
+		if [[ ! $2 ]]; then
+		 echo "supply an instance to destroy"
+		 exit 1	
+		fi
+		
+		_load_instance $2
+		if [[ $? == 1 ]]
+		then
+			echo "unable to find instance to destroy"
+			exit 1
+		fi
+
 		echo "Do you really want to destory the database?[y/n]:"
 		read answer
 
 		if [ $answer == "y" ]; then
+			
 			 rm $location/{virtuoso.log,virtuoso.db,virtuoso.lck,virtuoso-temp.db,virtuoso.trx,virtuoso.pxa}
 		else
 			echo "potential disaster averted"

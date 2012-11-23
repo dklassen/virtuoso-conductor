@@ -93,13 +93,11 @@ EOF
 
 function _setup_instance(){
 	_load_instance $1
-	if [ ! -f $virtuoso ]; then
-		ln -s $virtuoso_home/bin/virtuoso-t $virtuoso
+	if [ ! -f "$location$virtuoso" ]; then
+		ln -s $virtuoso_home/bin/virtuoso-t "$location$virtuoso"
 
 		if [[ $? == 1 ]]; then
 			return 0
-		else
-			return 1
 		fi
 	fi
 
@@ -185,7 +183,6 @@ function trigger(){
 function status(){
 	local _virtuoso_status=$1
  	local _status_result=$(ps ax | grep -v grep | grep $virtuoso | awk '{print $1}')
-
 	if [ $_status_result ]; then
 		_status_result=true
 	else
