@@ -7,14 +7,15 @@ function _usage(){
 	select from one of the following options:
 	[list|setup|start|stop|restart|load|clear|index|destory]
 
-	setup   : create the symlinks needed to run the virtuoso instance
-	list    : list the available instances to interact with
-	start	: start the server
-	stop	: shutdown the server gracefully
-	restart	: restart the server
-	load	: load directory of files. the graph can be specified by using load into <graphname>
-	clear	: clear graph from database specified by string
-	index	: generate the index for facet
+	status <instance>  : check the status of an instance (running/stopped)
+	setup  <instance>  : create the symlinks needed to run the virtuoso instance
+	list               : list the available instances to interact with
+	start	<instance> : start the server
+	stop	<instance> : shutdown the server gracefully
+	restart	<instance> : restart the server
+	load	           : load directory of files. the graph can be specified by using load into <graphname>
+	clear	           : clear graph from database specified by string
+	index <instance>   : generate the index for facet
 	
 	-r : specifify recursive loading of files in subdirectories
 	-t : specify the type of file to load, ntriples, rdf, or nquads

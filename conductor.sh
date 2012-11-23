@@ -47,6 +47,25 @@ done
 shift $(($OPTIND - 1))
 
 case $1 in
+	status)
+		if [ ! $2 ]; then
+			echo "select an instance"
+			exit 0
+		else
+			_load_instance $2
+
+			if [[ $? == 0 ]]; then
+				status check
+				if [[ $check == "true" ]]; then
+					echo "status: running"
+					exit 0
+				else
+					echo "status: stopped"
+					exit 0
+				fi
+			fi
+		fi
+		;;
 	setup)
 		if [ ! $2 ]; then
 			echo "Need to specify a instance to load. Use [list] to show."
