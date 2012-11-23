@@ -10,7 +10,16 @@ These scripts are used to load data into virtuoso and do the necessary transform
 Lib
 ====
 
-functions for sending commands to virtuoso and doing some maintenance
+functions for sending commands to virtuoso and doing some maintenance.
+
+Lib/Tasks
+=========
+
+Contains the rake files for database management tasks.
+
+> rake -T
+
+will list the avaiable tasks
 
 Config
 ======
